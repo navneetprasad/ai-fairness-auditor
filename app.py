@@ -47,38 +47,39 @@ if st.button("Calculate Bias & Generate Report"):
     rate_under_25 = approved_under_25 / total_under_25
 
     disparate_impact = rate_under_25 / rate_over_25
-        # Display Math visually
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Over 25 Approval", f"{rate_over_25 * 100:.1f}%")
-        col2.metric("Under 25 Approval", f"{rate_under_25 * 100:.1f}%")
-        
-        if disparate_impact < 0.80:
-            col3.error(f"Disparate Impact: {disparate_impact:.2f} (FAIL)")
-        else:
-            col3.success(f"Disparate Impact: {disparate_impact:.2f} (PASS)")
 
-        st.markdown("---")
-        st.subheader("3. AI Compliance Report")
-        
-        # Connect to Gemini
-        with st.spinner("Generating regulatory analysis..."):
-            try:
-               client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-                prompt = f"""
-                You are an expert financial compliance officer. I am providing you with the results of an algorithmic fairness audit on an AI credit scoring model.
+    # Display Math visually
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Over 25 Approval", f"{rate_over_25 * 100:.1f}%")
+    col2.metric("Under 25 Approval", f"{rate_under_25 * 100:.1f}%")
+    
+    if disparate_impact < 0.80:
+        col3.error(f"Disparate Impact: {disparate_impact:.2f} (FAIL)")
+    else:
+        col3.success(f"Disparate Impact: {disparate_impact:.2f} (PASS)")
 
-                Audit Results:
-                - Privilege Group (Over 25) Approval Rate: {rate_over_25 * 100}%
-                - Unprivileged Group (Under 25) Approval Rate: {rate_under_25 * 100}%
-                - Disparate Impact Ratio: {disparate_impact:.2f}
+    st.markdown("---")
+    st.subheader("3. AI Compliance Report")
+    
+    # Connect to Gemini silently using Streamlit Secrets
+    with st.spinner("Generating regulatory analysis..."):
+        try:
+            client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+            prompt = f"""
+            You are an expert financial compliance officer. I am providing you with the results of an algorithmic fairness audit on an AI credit scoring model.
 
-                The model failed the 80% rule (Disparate Impact < 0.80). 
-                Write a brief, professional, 2-paragraph compliance report explaining this bias and suggesting one technical way a data scientist could fix the training data to be more fair.
-                """
-                response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt,
-                )
-                st.info(response.text)
-            except Exception as e:
-                st.error(f"Failed to connect. Error: {e}")
+            Audit Results:
+            - Privilege Group (Over 25) Approval Rate: {rate_over_25 * 100}%
+            - Unprivileged Group (Under 25) Approval Rate: {rate_under_25 * 100}%
+            - Disparate Impact Ratio: {disparate_impact:.2f}
+
+            The model failed the 80% rule (Disparate Impact < 0.80). 
+            Write a brief, professional, 2-paragraph compliance report explaining this bias and suggesting one technical way a data scientist could fix the training data to be more fair.
+            """
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt,
+            )
+            st.info(response.text)
+        except Exception as e:
+            st.error(f"Failed to connect. Error: {e}")
